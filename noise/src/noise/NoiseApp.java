@@ -1,23 +1,20 @@
-/*
- * To change this template, choose Tools | Templates
- * and open the template in the editor.
- */
 package noise;
 /**
  *
  * @author Michael
  */
-import com.noise.SimplexNoise;
-import com.noise.Noise;
-import com.noise.ValueNoise;
-import com.noise.PerlinNoise;
+import com.noise.*;
+
 import javax.swing.JFrame;
+
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.event.*;
 import java.io.File;
 import java.io.IOException;
+
 import javax.imageio.ImageIO;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
@@ -31,37 +28,72 @@ public class NoiseApp {
     MyFrame frame;
     
     public NoiseApp(){
-        //f = new AppFrame();
-        frame = new MyFrame();
+        f = new AppFrame();
+        //frame = new MyFrame();
     }
     
     public static void main(String[] args){
-        NoiseApp app = new NoiseApp();
+        new NoiseApp();
     }
 }
 
 class AppFrame extends JFrame{
-    
-    public AppFrame(){
+	private static final long serialVersionUID = 5893367620671645772L;
+
+	public AppFrame(){
+    	//initialize the window
         setTitle("NoiseApp");
         setDefaultCloseOperation(EXIT_ON_CLOSE);
         setBackground(Color.DARK_GRAY);
-        setResizable(false);
+        setResizable(true);
         setSize(800, 560);
-        setLayout(null);
-        final AppCanvas canvas = new AppCanvas(512, 512);
-        final JScrollPane s = new JScrollPane(canvas, JScrollPane.VERTICAL_SCROLLBAR_ALWAYS, JScrollPane.HORIZONTAL_SCROLLBAR_ALWAYS);
-        s.setSize(new Dimension(530, 532));
-        s.setLocation(0, 0);
-        add(s);
+        setLayout(new BorderLayout());
         
+        //create the canvas which shows the map
+        final AppCanvas canvas = new AppCanvas(256, 256);
+        canvas.addMouseWheelListener(new MouseWheelListener(){
+        	@Override
+        	public void mouseWheelMoved(MouseWheelEvent e){
+        		int notches = e.getWheelRotation();
+        		canvas.zoom(notches);
+        	}
+        });
+        canvas.addComponentListener(new ComponentListener() {
+			
+			@Override
+			public void componentShown(ComponentEvent e) {
+				
+				
+			}
+			
+			@Override
+			public void componentResized(ComponentEvent e) {
+				canvas.setResized(true);
+			}
+			
+			@Override
+			public void componentMoved(ComponentEvent e) {
+				
+				
+			}
+			
+			@Override
+			public void componentHidden(ComponentEvent e) {
+				
+				
+			}
+		});
+        final JScrollPane s = new JScrollPane(canvas, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        add(s, BorderLayout.CENTER);
+        
+        //create JPanel which holds options
         JPanel p = new JPanel();
-        p.setSize(270, this.getHeight());
+        //p.setPreferredSize(new Dimension(270, this.getHeight()));
         p.setLocation(530, 0);
         p.setBackground(Color.DARK_GRAY);
-        p.setLayout(null);
+        p.setLayout(new BoxLayout(p, BoxLayout.Y_AXIS));
         NoiseType[] tmp = {NoiseType.Value, NoiseType.Perlin, NoiseType.Simplex};
-        final JComboBox<NoiseType> noiseBox = new JComboBox(tmp);
+        final JComboBox<NoiseType> noiseBox = new JComboBox<NoiseType>(tmp);
         noiseBox.setSelectedIndex(0);
         noiseBox.addActionListener(new ActionListener(){
             @Override
@@ -73,10 +105,10 @@ class AppFrame extends JFrame{
         noiseBox.setSize(new Dimension(80, 30));
         noiseBox.setLocation(5, 135);
         p.add(noiseBox);
-        final JTextField text = new JTextField("100000");
-        text.setSize(160, 30);
-        text.setLocation(88, 100);
-        p.add(text);
+        final JTextField seedText = new JTextField("100000");
+        seedText.setSize(160, 30);
+        seedText.setLocation(88, 100);
+        p.add(seedText);
         final JButton button1 = new JButton("seed");
         button1.setSize(80, 30);
         button1.setLocation(5, 100);
@@ -84,26 +116,36 @@ class AppFrame extends JFrame{
             @Override
             public void mouseClicked(MouseEvent e){
                 if(e.getButton() == MouseEvent.BUTTON1){
-                    canvas.setSeed(Integer.parseInt(text.getText()));
-                    canvas.repaint(0);
+                	canvas.setClicked(true);
+                    canvas.setSeed(Integer.parseInt(seedText.getText()));
+                    canvas.setPreferredSize(new Dimension(s.getViewport().getWidth(), s.getViewport().getHeight()));
+                    canvas.revalidate();
+                    System.out.println(canvas.getWidth() + "    " + canvas.getHeight());
+                    canvas.repaint();
                 }
             }
         });
         p.add(button1);
-        add(p);
+        final JScrollPane t = new JScrollPane(p, JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JScrollPane.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+        add(t, BorderLayout.LINE_END);
+        
         setVisible(true);
     }
 }
 
 class AppCanvas extends JPanel{
-    private int seed = 100000;
-    private boolean first = true;
+	private static final long serialVersionUID = -7640766025233749863L;
+	
+	private int seed = 100000;
     private boolean seedChanged = true;
     private BufferedImage curImage;
     private NoiseType noiseType;
+    private boolean noiseTypeChanged = false;
+    private int currentZoomLevel = 1;
+    private boolean resized = false;
+    private boolean clicked = false;
     
     public AppCanvas(int width, int height){
-        //setSize(width, width);
         setPreferredSize(new Dimension(width, height));
         setBackground(Color.WHITE);
         noiseType = NoiseType.Value;
@@ -116,61 +158,87 @@ class AppCanvas extends JPanel{
     }
     
     public void setNoiseType(NoiseType nt){
+    	if(noiseType == nt) return;
         noiseType = nt;
+        noiseTypeChanged = true;
+    }
+    
+    public void setResized(boolean b){
+    	resized = b;
+    }
+    
+    public void setClicked(boolean b){
+    	clicked = b;
+    }
+    
+    public int getCurrentZoomLevel(){
+    	return currentZoomLevel;
     }
     
     @Override
     public void paintComponent(Graphics g){
         super.paintComponent(g);
-        if(seedChanged){
+        if(clicked) {
+        	currentZoomLevel = 1;
+        }
+        if(seedChanged || noiseTypeChanged || (resized && clicked)){
             seedChanged = false;
+            noiseTypeChanged = false;
+            resized = false;
+            clicked = false;
+            System.out.println(this.getWidth() + "    " +  this.getHeight());
             drawImage(g);
         }
         else drawCurImage(g);
     }
     
     private void drawCurImage(Graphics g){
-        g.drawImage(curImage, 0, 0, null);
+        g.drawImage(curImage, 0, 0, this.getWidth(), this.getHeight(), null);
     }
     
     private void drawImage(Graphics g){
         Noise n;
+        double sideSum = this.getWidth() + this.getHeight();
+        double xRatio = 1.6;//(this.getWidth() / sideSum) + 1;
+        double yRatio = 1.6;//(this.getHeight() / sideSum) + 1;
         switch(noiseType){
             case Value:
                 n = new ValueNoise();
                 break;
             case Perlin:
                 n = new PerlinNoise();
+                xRatio *= 0.35d;
+                yRatio *= 0.35d;
                 break;
             case Simplex:
                 n = new SimplexNoise();
+                xRatio *= 0.2d;
+                yRatio *= 0.2d;
                 break;
             default:
                 n = new ValueNoise();
         }
         n.setSeed(seed);
-        System.out.println(this.getWidth());
         BufferedImage im = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_RGB);
+        
         for(int x=0; x<im.getWidth(); x++){
                 for(int y=0; y<im.getHeight(); y++){
-                    double xRatio = (double)this.getWidth()/(double)this.getHeight();
-                    double yRatio = 1d/xRatio;
-                    double noise = n.noise2D((double)x * 5d/im.getWidth(), (double)y * (5d*yRatio)/im.getHeight()) * 128d + 128d;
+                	double noise = n.noise2D((double)x * (5d*xRatio)/im.getWidth(), (double)y * (5d*yRatio)/im.getHeight()) * 128d + 128d;
                     im.setRGB((int)x, (int)y, getRGB(noise));
                 }
         }
         curImage = im;
         g.drawImage(im, 0, 0, null);
-        saveImage();    
+        
     }
     
     private int getRGB(double noise){
         int rgb = (int)noise;
         
-        if(rgb <= 100){ return Color.BLUE.getRGB(); }
-        else if(rgb > 100 && rgb <= 190){ return Color.GREEN.getRGB(); }
-        else if(rgb > 190 && rgb <= 215){ return Color.ORANGE.getRGB(); }
-        else if(rgb > 215 && rgb <= 245){ return Color.GRAY.getRGB(); }
+        if(rgb <= 120){ return Color.BLUE.getRGB(); }
+        else if(rgb > 120 && rgb <= 210){ return Color.GREEN.getRGB(); }
+        else if(rgb > 210 && rgb <= 235){ return Color.ORANGE.getRGB(); }
+        else if(rgb > 235 && rgb <= 245){ return Color.GRAY.getRGB(); }
         else{ return Color.WHITE.getRGB(); }
     }
     
@@ -186,8 +254,29 @@ class AppCanvas extends JPanel{
     }
     
     private void saveImage(){
+    	//JFrame saveFrame = new JFrame();
+    	//saveFrame.setPreferredSize(new Dimension(200, 50));
+    	//saveFrame.setVisible(true);
         try{ ImageIO.write(curImage, "PNG", new File("ValueNoiseImg.png")); }
         catch(IOException e){ }
+    }
+    
+    protected void zoom(int notches){
+    	if(notches > 0){ //zoom in
+    		if(currentZoomLevel == 10) return;
+    		currentZoomLevel++;
+    		this.setPreferredSize(new Dimension(this.getWidth() * currentZoomLevel , this.getHeight() * currentZoomLevel));
+    	}
+    	else { //zoom out
+    		System.out.println(currentZoomLevel);
+    		if(currentZoomLevel == 1) return;
+    		this.setPreferredSize(new Dimension(this.getWidth() / currentZoomLevel , this.getHeight() / currentZoomLevel));
+    		currentZoomLevel--;
+    	}
+    	
+    	this.revalidate();
+    	this.repaint();
+    	
     }
 }
 
@@ -196,7 +285,12 @@ enum NoiseType{
 }
 
 class MyFrame extends JFrame{
-    public MyFrame(){
+    /**
+	 * 
+	 */
+	private static final long serialVersionUID = 7647077576845989352L;
+
+	public MyFrame(){
         init();
     }
     

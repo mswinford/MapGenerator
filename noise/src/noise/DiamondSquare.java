@@ -11,7 +11,6 @@ package noise;
 import java.util.*;
 import java.awt.*;
 import javax.swing.*;
-import static javax.swing.JFrame.EXIT_ON_CLOSE;
 
 public class DiamondSquare {
     
@@ -23,8 +22,8 @@ public class DiamondSquare {
         final double SEED = 5.0;
         double[][] data = new double[DATA_SIZE][DATA_SIZE];
         //seed the data
-        //data[0][0] = data[0][DATA_SIZE-1] = data[DATA_SIZE-1][0] = 
-        //  data[DATA_SIZE-1][DATA_SIZE-1] = SEED;
+        data[0][0] = data[0][DATA_SIZE-1] = data[DATA_SIZE-1][0] = 
+          data[DATA_SIZE-1][DATA_SIZE-1] = SEED;
 
         double h = 1.0;//the range (-h -> +h) for the average offset
         Random r = new Random();//for the new value in range of h
@@ -106,7 +105,8 @@ public class DiamondSquare {
 }
 
 class DSFrame extends JFrame{
-    double[][] data;
+	private static final long serialVersionUID = 8687921816967617467L;
+	double[][] data;
     
     public DSFrame(double[][] data){
         this.setDefaultCloseOperation(EXIT_ON_CLOSE);

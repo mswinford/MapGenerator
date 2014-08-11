@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<classpath>
+	<classpathentry kind="src" path="noise/src"/>
+	<classpathentry kind="src" path="NoiseLib/src"/>
+	<classpathentry kind="lib" path="NoiseLib/dist/NoiseLib.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="output" path="noise/build/classes"/>
+</classpath>

@@ -52,10 +52,10 @@ public class SimplexNoise extends Noise {
     // Skewing and unskewing factors for 2, 3, and 4 dimensions
     private static final double F2 = 0.5*(Math.sqrt(3.0)-1.0);
     private static final double G2 = (3.0-Math.sqrt(3.0))/6.0;
-    private static final double F3 = 1.0/3.0;
-    private static final double G3 = 1.0/6.0;
-    private static final double F4 = (Math.sqrt(5.0)-1.0)/4.0;
-    private static final double G4 = (5.0-Math.sqrt(5.0))/20.0;
+    //private static final double F3 = 1.0/3.0;
+    //private static final double G3 = 1.0/6.0;
+    //private static final double F4 = (Math.sqrt(5.0)-1.0)/4.0;
+    //private static final double G4 = (5.0-Math.sqrt(5.0))/20.0;
     
     @Override
     public double noise(double x){

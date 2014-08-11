@@ -14,7 +14,6 @@ import java.io.*;
 import java.awt.Color;
 import javax.swing.JFrame;
 import java.awt.*;
-import java.awt.geom.*;
 import java.awt.image.BufferedImage;
 import javax.imageio.*;
 
@@ -165,12 +164,12 @@ public class ValueNoise extends Noise{
      * @param args the command line arguments
      */
 //    public static void main(String[] args) {
-//        // TODO code application logic here
 //        Frame f = new Frame();
 //    }
 }
 class Frame extends JFrame{
-    ValueNoise n;
+	private static final long serialVersionUID = -7352169016020423945L;
+	ValueNoise n;
     
     public Frame(){
         n = new ValueNoise();
